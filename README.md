@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" alt="PepinoTv" width="160"></p>
+
 # PepinoTv
 
 [![Build e testes](https://github.com/vgvcosta/IPTVPlayer/actions/workflows/build.yml/badge.svg)](https://github.com/vgvcosta/IPTVPlayer/actions/workflows/build.yml)
