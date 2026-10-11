@@ -202,6 +202,41 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ═══ Atualizações ═══ -->
+                <TextBlock Text="Atualizações" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}" DataContext="{Binding Updates}">
+                    <StackPanel>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Procurar atualizações" Command="{Binding CheckCommand}" />
+                                <Button Style="{StaticResource PrimaryButton}" Content="{Binding InstallButtonText}" Margin="8,0,0,0"
+                                        Command="{Binding InstallCommand}"
+                                        Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding CurrentVersionText}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <ProgressBar Height="6" Margin="0,12,0,0" Maximum="100" Value="{Binding DownloadPercent, Mode=OneWay}"
+                                     Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,10,0,0"
+                                   Visibility="{Binding Status, Converter={StaticResource NullToVisibility}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}">
+                            <Run Text="As versões novas vêm do GitHub. A app verifica sozinha ao arrancar." />
+                            <Hyperlink Command="{Binding OpenReleasesCommand}" Foreground="{StaticResource AccentHoverBrush}">Ver página das versões</Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
                 <!-- ═══ Cache ═══ -->
                 <TextBlock Text="Cache" Style="{StaticResource Section}" />
                 <Border Style="{StaticResource Card}" Margin="0,0,0,16">

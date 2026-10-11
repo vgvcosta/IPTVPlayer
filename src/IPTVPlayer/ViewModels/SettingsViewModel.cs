@@ -45,8 +45,9 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public SettingsViewModel(ParentalControlService parental, SettingsRepository settings, PlayerService player,
         ImageDiskCache imageCache, ChannelRepository channels, VodRepository vod, PlayerViewModel playerViewModel,
-        RecordingService recordings, IPTVPlayer.Views.GamepadService gamepad)
+        RecordingService recordings, IPTVPlayer.Views.GamepadService gamepad, UpdateViewModel updates)
     {
+        Updates = updates;
         _playerViewModel = playerViewModel;
         _recordings = recordings;
         _gamepad = gamepad;
@@ -134,6 +135,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _gamepadEnabled = true;
+
+    public UpdateViewModel Updates { get; }
 
     // ── Cache ──
     [ObservableProperty]

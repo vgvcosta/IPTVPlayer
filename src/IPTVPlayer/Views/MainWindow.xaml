@@ -536,6 +536,27 @@
                         <TextBlock Text="Bloquear" />
                     </StackPanel>
                 </Button>
+                <!-- Aparece só quando há uma versão nova no GitHub -->
+                <Button DockPanel.Dock="Left" Style="{StaticResource PrimaryButton}" Padding="10,3" FontSize="13" Margin="0,0,12,0"
+                        VerticalAlignment="Center" ToolTip="Transferir e instalar a nova versão" AutomationProperties.Name="Atualizar"
+                        Command="{Binding Updates.InstallCommand}"
+                        Visibility="{Binding Updates.IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE896;" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding Updates.InstallButtonText}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Updates.IsDownloading}" Value="True">
+                                            <Setter Property="Text" Value="{Binding Updates.DownloadPercent, StringFormat='A transferir… {0:0}%'}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center"
                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
                     <ProgressBar Width="180" IsIndeterminate="{Binding IsBusyIndeterminate}" Value="{Binding BusyProgress}"

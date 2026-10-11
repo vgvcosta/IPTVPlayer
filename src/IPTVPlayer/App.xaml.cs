@@ -76,6 +76,9 @@ public partial class App : Application
         playerVm.PreferredAudioLanguage = prefs.Get(SettingsRepository.PreferredAudio);
         playerVm.PreferredSubtitleLanguage = prefs.Get(SettingsRepository.PreferredSubtitle);
         _services.GetRequiredService<GamepadService>().Enabled = prefs.Get(SettingsRepository.GamepadEnabled) != "0";
+
+        // Procura uma versão nova em segundo plano (sem avisos se falhar, ex.: sem internet).
+        _ = _services.GetRequiredService<UpdateViewModel>().CheckSilentlyAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -121,6 +124,8 @@ public partial class App : Application
         services.AddSingleton<PlayerService>();
         services.AddSingleton<RecordingService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<UpdateService>();
+        services.AddSingleton<UpdateViewModel>();
 
         services.AddSingleton<PlayerViewModel>();
         services.AddSingleton<VodBrowserViewModel>();

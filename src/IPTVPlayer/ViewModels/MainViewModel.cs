@@ -48,8 +48,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel(PlaylistService playlistService, FavoritesRepository favorites, SettingsRepository settings,
         IDialogService dialogs, PlayerViewModel player, EpgService epgService, VodBrowserViewModel vod,
-        ParentalControlService parental, RecordingService recordings, LibVlcHost vlcHost)
+        ParentalControlService parental, RecordingService recordings, LibVlcHost vlcHost, UpdateViewModel updates)
     {
+        Updates = updates;
         _vlcHost = vlcHost;
         _recordings = recordings;
         recordings.Changed += (_, _) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(UpdateRecordingState);
@@ -205,6 +206,8 @@ public sealed partial class MainViewModel : ObservableObject
         : !string.IsNullOrWhiteSpace(SearchText) ? "Nenhum canal encontrado."
         : SelectedGroup?.Kind == GroupKind.Favorites ? "Ainda não tens favoritos.\nUsa a estrela ao lado de um canal para o adicionar."
         : "Sem canais.";
+
+    public UpdateViewModel Updates { get; }
 
     // ───────────────────────────── Arranque e estado ─────────────────────────────
 
