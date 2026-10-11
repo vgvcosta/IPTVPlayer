@@ -1,0 +1,30 @@
+name: Release
+
+# Criar uma tag "vX.Y.Z" (ex.: git tag v4.0.0 && git push origin v4.0.0) publica uma release
+# com o .zip self-contained para Windows x64.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publicar (testes + zip)
+        shell: pwsh
+        run: ./publish.ps1 -Zip
+
+      - name: Criar release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/IPTVPlayer-*-win-x64.zip
+          generate_release_notes: true
