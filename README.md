@@ -1,6 +1,6 @@
 # IPTV Player
 
-[![Build e testes](https://github.com/OWNER/IPTVPlayer/actions/workflows/build.yml/badge.svg)](https://github.com/OWNER/IPTVPlayer/actions/workflows/build.yml)
+[![Build e testes](https://github.com/vgvcosta/IPTVPlayer/actions/workflows/build.yml/badge.svg)](https://github.com/vgvcosta/IPTVPlayer/actions/workflows/build.yml)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
 ![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
@@ -19,7 +19,7 @@ controlo parental. Interface escura pensada para ver de longe, em português.
 
 ## Transferir
 
-Vai às [Releases](https://github.com/OWNER/IPTVPlayer/releases), descarrega `IPTVPlayer-x.y.z-win-x64.zip`,
+Vai às [Releases](https://github.com/vgvcosta/IPTVPlayer/releases), descarrega `IPTVPlayer-x.y.z-win-x64.zip`,
 extrai e abre `IPTVPlayer.exe`. Não é preciso instalar nada (inclui o .NET e o VLC).
 
 > **Aviso:** esta aplicação é só um leitor e **não inclui nem fornece canais ou conteúdos**. Usa-a
