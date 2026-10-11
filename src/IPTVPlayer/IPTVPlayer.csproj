@@ -9,7 +9,7 @@
     <RootNamespace>IPTVPlayer</RootNamespace>
     <AssemblyName>IPTVPlayer</AssemblyName>
     <Product>PepinoTv</Product>
-    <Version>4.2.0</Version>
+    <Version>4.2.1</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Company>Vitor Costa</Company>
     <Copyright>© 2026 Vitor Costa · MIT</Copyright>

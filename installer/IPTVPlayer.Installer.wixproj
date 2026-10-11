@@ -6,7 +6,7 @@
     Parâmetros: -p:PublishDir=<pasta publicada> -p:Version=<x.y.z>
   -->
   <PropertyGroup>
-    <Version Condition="'$(Version)' == ''">4.2.0</Version>
+    <Version Condition="'$(Version)' == ''">4.2.1</Version>
     <PublishDir Condition="'$(PublishDir)' == ''">..\publish\win-x64</PublishDir>
     <OutputName>PepinoTv-$(Version)-win-x64</OutputName>
     <Platform>x64</Platform>
