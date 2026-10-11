@@ -1,0 +1,576 @@
+<Window x:Class="IPTVPlayer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:IPTVPlayer.ViewModels"
+        xmlns:views="clr-namespace:IPTVPlayer.Views"
+        xmlns:controls="clr-namespace:IPTVPlayer.Views.Controls"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:MainViewModel}"
+        Title="IPTV Player" Width="1440" Height="860" MinWidth="1000" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource UiFont}" FontSize="16"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <!-- Clique num canal = reproduzir (EventSetter precisa do code-behind desta janela) -->
+        <Style x:Key="ChannelItem" TargetType="ListBoxItem" BasedOn="{StaticResource ListItem}">
+            <Setter Property="Padding" Value="8,6" />
+            <EventSetter Event="MouseLeftButtonUp" Handler="ChannelItem_MouseLeftButtonUp" />
+        </Style>
+
+        <DataTemplate x:Key="ChannelTemplate" DataType="{x:Type vm:ChannelItemViewModel}">
+            <Grid Height="56" ToolTip="{Binding EpgToolTip}" ToolTipService.InitialShowDelay="600">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="48" />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Number}" Style="{StaticResource SecondaryText}" FontSize="14"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0" />
+
+                <!-- Logótipo, com as iniciais por baixo enquanto carrega (ou se não existir) -->
+                <Border Grid.Column="1" Width="56" Height="42" CornerRadius="6" Background="{StaticResource Surface2Brush}">
+                    <Grid>
+                        <TextBlock Text="{Binding Initials}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image views:ImageLoader.SourceUrl="{Binding LogoUrl}" Margin="3"
+                               Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0,8,0">
+                    <DockPanel>
+                        <TextBlock x:Name="PlayingIcon" DockPanel.Dock="Left" Style="{StaticResource Icon}" Text="&#xE768;" FontSize="12"
+                                   Foreground="{StaticResource AccentHoverBrush}" Margin="0,1,6,0" Visibility="Collapsed" />
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE81C;" FontSize="12" Margin="6,1,0,0"
+                                   Foreground="{StaticResource TextSecondaryBrush}" ToolTip="Tem arquivo (catch-up)"
+                                   Visibility="{Binding Model.HasCatchup, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock x:Name="ChannelName" Text="{Binding Name}" FontSize="17" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                    <!-- EPG: programa atual e progresso -->
+                    <StackPanel Visibility="{Binding HasEpg, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding NowTitle}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <ProgressBar Value="{Binding NowProgress, Mode=OneWay}" Maximum="1" Height="2" Margin="0,3,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="3" Style="{StaticResource IconButton}" Width="36" Height="36"
+                        Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        CommandParameter="{Binding}" Focusable="False" ToolTip="Favorito">
+                    <TextBlock x:Name="Star" Style="{StaticResource Icon}" Text="&#xE734;"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </Button>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                    <Setter TargetName="Star" Property="Text" Value="&#xE735;" />
+                    <Setter TargetName="Star" Property="Foreground" Value="{StaticResource FavoriteBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <Setter TargetName="ChannelName" Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                    <Setter TargetName="ChannelName" Property="FontWeight" Value="SemiBold" />
+                    <Setter TargetName="PlayingIcon" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Grupos (direto) e categorias (filmes/séries) -->
+        <DataTemplate x:Key="GroupTemplate" DataType="{x:Type vm:GroupItemViewModel}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Count, StringFormat=N0}" Style="{StaticResource SecondaryText}"
+                           VerticalAlignment="Center" Margin="8,0,0,0" />
+                <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE72E;" FontSize="13" Margin="6,0,0,0"
+                           Foreground="{StaticResource TextSecondaryBrush}" ToolTip="Bloqueado (controlo parental)"
+                           Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock x:Name="GroupIcon" DockPanel.Dock="Left" Style="{StaticResource Icon}" FontSize="15"
+                           Width="22" Margin="0,0,6,0" Text="&#xE8FD;" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Text="{Binding Name}" FontSize="16" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:GroupKind.All}">
+                    <Setter TargetName="GroupIcon" Property="Text" Value="&#xE7F4;" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:GroupKind.Favorites}">
+                    <Setter TargetName="GroupIcon" Property="Text" Value="&#xE735;" />
+                    <Setter TargetName="GroupIcon" Property="Foreground" Value="{StaticResource FavoriteBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:GroupKind.ContinueWatching}">
+                    <Setter TargetName="GroupIcon" Property="Text" Value="&#xE81C;" />
+                    <Setter TargetName="GroupIcon" Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Filmes e séries: capa + nome + ano/nota/categoria -->
+        <Style x:Key="VodItem" TargetType="ListBoxItem" BasedOn="{StaticResource ListItem}">
+            <Setter Property="Padding" Value="8,6" />
+            <EventSetter Event="MouseLeftButtonUp" Handler="VodItem_MouseLeftButtonUp" />
+        </Style>
+
+        <DataTemplate x:Key="VodTemplate" DataType="{x:Type vm:VodItemViewModel}">
+            <Grid Height="88">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Width="58" Height="86" CornerRadius="4" Background="{StaticResource Surface2Brush}" ClipToBounds="True">
+                    <Grid>
+                        <TextBlock Text="{Binding Initials}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image views:ImageLoader.DecodeHeight="172" views:ImageLoader.SourceUrl="{Binding PosterUrl}"
+                               Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <ProgressBar VerticalAlignment="Bottom" Height="4" Maximum="1" Value="{Binding Progress, Mode=OneWay}"
+                                     Background="#99000000"
+                                     Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}" />
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="3" CornerRadius="9" Width="18" Height="18"
+                                Background="{StaticResource AccentBrush}" ToolTip="Visto"
+                                Visibility="{Binding IsWatched, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" FontSize="10" Foreground="White" />
+                        </Border>
+                    </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,8,0">
+                    <DockPanel>
+                        <TextBlock x:Name="PlayingIcon" DockPanel.Dock="Left" Style="{StaticResource Icon}" Text="&#xE768;" FontSize="12"
+                                   Foreground="{StaticResource AccentHoverBrush}" Margin="0,2,6,0" Visibility="Collapsed" VerticalAlignment="Top" />
+                        <TextBlock x:Name="VodName" Text="{Binding Name}" FontSize="17" TextWrapping="Wrap" MaxHeight="46"
+                                   TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding MetaText}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource IconButton}" Width="36" Height="36" Focusable="False" ToolTip="Favorito"
+                            Command="{Binding DataContext.Vod.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}">
+                        <TextBlock x:Name="VodStar" Style="{StaticResource Icon}" Text="&#xE734;" Foreground="{StaticResource TextSecondaryBrush}" />
+                    </Button>
+                    <TextBlock x:Name="Chevron" Style="{StaticResource Icon}" Text="&#xE768;" FontSize="16"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0,8,0" />
+                </StackPanel>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSeries}" Value="True">
+                    <Setter TargetName="Chevron" Property="Text" Value="&#xE76C;" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                    <Setter TargetName="VodStar" Property="Text" Value="&#xE735;" />
+                    <Setter TargetName="VodStar" Property="Foreground" Value="{StaticResource FavoriteBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <Setter TargetName="VodName" Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                    <Setter TargetName="PlayingIcon" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Episódios -->
+        <Style x:Key="EpisodeItem" TargetType="ListBoxItem" BasedOn="{StaticResource ListItem}">
+            <Setter Property="Padding" Value="8,6" />
+            <EventSetter Event="MouseLeftButtonUp" Handler="EpisodeItem_MouseLeftButtonUp" />
+        </Style>
+
+        <DataTemplate x:Key="EpisodeTemplate" DataType="{x:Type vm:EpisodeItemViewModel}">
+            <Grid Height="76">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="122" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="120" Height="68" CornerRadius="4" Background="{StaticResource Surface2Brush}" ClipToBounds="True">
+                    <Grid>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE768;" FontSize="20" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <Image views:ImageLoader.DecodeHeight="136" views:ImageLoader.SourceUrl="{Binding ImageUrl}" Stretch="UniformToFill" />
+                        <ProgressBar VerticalAlignment="Bottom" Height="4" Maximum="1" Value="{Binding Progress, Mode=OneWay}"
+                                     Background="#99000000"
+                                     Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}" />
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="4" CornerRadius="9" Width="18" Height="18"
+                                Background="{StaticResource AccentBrush}" ToolTip="Visto"
+                                Visibility="{Binding IsWatched, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" FontSize="10" Foreground="White" />
+                        </Border>
+                    </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,8,0">
+                    <TextBlock x:Name="EpisodeName" Text="{Binding Name}" FontSize="16" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding DurationText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                               Visibility="{Binding DurationText, Converter={StaticResource NullToVisibility}}" />
+                    <TextBlock Text="{Binding Plot}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                </StackPanel>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <Setter TargetName="EpisodeName" Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                    <Setter TargetName="EpisodeName" Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Temporadas como "pílulas" -->
+        <Style x:Key="SeasonChip" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" CornerRadius="15" Padding="14,6" Background="{StaticResource Surface2Brush}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Surface3Brush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshPlaylistCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!-- Larguras fixas e não "Auto": numa coluna Auto a Grid mede o conteúdo com altura infinita,
+             o que desliga a virtualização da lista de canais (criaria todos os itens). -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="LeftColumn" Width="290" />
+            <ColumnDefinition x:Name="CenterColumn" Width="460" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ═════════════ Coluna esquerda: playlists, modo e grupos/categorias ═════════════ -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0"
+                Visibility="{Binding IsFullscreen, Converter={StaticResource InverseBoolToVisibility}}">
+            <Grid Margin="0,12,0,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Margin="16,0,8,6">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Atualizar (F5)" AutomationProperties.Name="Atualizar playlist"
+                                Command="{Binding RefreshPlaylistCommand}" />
+                        <Button Style="{StaticResource IconButton}" Content="&#xE70F;" ToolTip="Editar playlist (nome, endereço, EPG)" AutomationProperties.Name="Editar playlist"
+                                Command="{Binding EditPlaylistCommand}" />
+                        <Button Style="{StaticResource IconButton}" Content="&#xE74D;" ToolTip="Remover playlist" AutomationProperties.Name="Remover playlist"
+                                Command="{Binding RemovePlaylistCommand}" />
+                        <Button Style="{StaticResource IconButton}" Content="&#xE710;" ToolTip="Adicionar playlist" AutomationProperties.Name="Adicionar playlist"
+                                Command="{Binding AddPlaylistCommand}" />
+                    </StackPanel>
+                    <TextBlock Text="PLAYLISTS" Style="{StaticResource SectionHeader}" />
+                </DockPanel>
+
+                <ListBox Grid.Row="1" Style="{StaticResource PlainList}" ItemContainerStyle="{StaticResource ListItem}"
+                         MaxHeight="190" ItemsSource="{Binding Playlists}" SelectedItem="{Binding SelectedPlaylist}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PlaylistItemViewModel}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontSize="16" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Style="{StaticResource SecondaryText}">
+                                    <Run Text="{Binding KindLabel, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding ChannelCount, Mode=OneWay, Converter={StaticResource ChannelCount}}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Direto / Filmes / Séries (só Xtream) -->
+                <Border Grid.Row="2" Background="{StaticResource Surface2Brush}" CornerRadius="8" Padding="3" Margin="12,14,12,0"
+                        Visibility="{Binding CanBrowseVod, Converter={StaticResource BoolToVisibility}}">
+                    <UniformGrid Columns="3">
+                        <RadioButton Style="{StaticResource SegmentRadio}" Content="Direto" GroupName="Mode" FontSize="14"
+                                     IsChecked="{Binding IsLiveMode}" ToolTip="Canais em direto (1)" />
+                        <RadioButton Style="{StaticResource SegmentRadio}" Content="Filmes" GroupName="Mode" FontSize="14"
+                                     IsChecked="{Binding IsMoviesMode}" ToolTip="Filmes (2)" />
+                        <RadioButton Style="{StaticResource SegmentRadio}" Content="Séries" GroupName="Mode" FontSize="14"
+                                     IsChecked="{Binding IsSeriesMode}" ToolTip="Séries (3)" />
+                    </UniformGrid>
+                </Border>
+
+                <TextBlock Grid.Row="3" Style="{StaticResource SectionHeader}" Margin="16,18,8,8">
+                    <TextBlock.Text>
+                        <Binding Path="IsLiveMode">
+                            <Binding.Converter>
+                                <views:BoolToTextConverter TrueText="GRUPOS" FalseText="CATEGORIAS" />
+                            </Binding.Converter>
+                        </Binding>
+                    </TextBlock.Text>
+                </TextBlock>
+
+                <ListBox x:Name="GroupList" AutomationProperties.Name="Grupos" Grid.Row="4" Style="{StaticResource PlainList}"
+                         ItemContainerStyle="{StaticResource ListItem}" ItemTemplate="{StaticResource GroupTemplate}"
+                         ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}"
+                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibility}}" />
+
+                <ListBox x:Name="CategoryList" AutomationProperties.Name="Categorias" Grid.Row="4" Style="{StaticResource PlainList}"
+                         ItemContainerStyle="{StaticResource ListItem}" ItemTemplate="{StaticResource GroupTemplate}"
+                         ItemsSource="{Binding Vod.Categories}" SelectedItem="{Binding Vod.SelectedCategory}"
+                         Visibility="{Binding IsLiveMode, Converter={StaticResource InverseBoolToVisibility}}" />
+            </Grid>
+        </Border>
+
+        <!-- ═════════════ Coluna central: pesquisa e listas ═════════════ -->
+        <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0"
+                Visibility="{Binding IsFullscreen, Converter={StaticResource InverseBoolToVisibility}}">
+            <Grid Margin="0,12,0,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="12,0,12,8">
+                    <TextBox x:Name="SearchBox" AutomationProperties.Name="Pesquisar canais" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="{Binding SearchPlaceholder}" Padding="38,9,36,9" FontSize="16"
+                             PreviewKeyDown="SearchBox_PreviewKeyDown" />
+                    <TextBlock Style="{StaticResource Icon}" Text="&#xE721;" HorizontalAlignment="Left" Margin="14,0,0,0"
+                               Foreground="{StaticResource TextSecondaryBrush}" IsHitTestVisible="False" />
+                    <Button Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="12" Width="30" Height="30"
+                            HorizontalAlignment="Right" Margin="0,0,4,0" ToolTip="Limpar pesquisa" Focusable="False"
+                            Command="{Binding ClearSearchCommand}"
+                            Visibility="{Binding SearchText, Converter={StaticResource NullToVisibility}}" />
+                </Grid>
+
+                <!-- Cabeçalho: direto -->
+                <DockPanel Grid.Row="1" Margin="18,2,12,8" MinHeight="30"
+                           Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibility}}">
+                    <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE8A9;" Width="34" Height="32" FontSize="15"
+                            Margin="6,0,0,0" ToolTip="Multi-ecrã: até 4 canais ao mesmo tempo (V)" AutomationProperties.Name="Multi-ecrã"
+                            Command="{Binding OpenMultiViewCommand}" />
+                    <Button DockPanel.Dock="Right" Padding="10,4" FontSize="14" Margin="12,0,0,0" ToolTip="Grelha de programação (G)"
+                            Command="{Binding OpenGuideCommand}" AutomationProperties.Name="Guia TV">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE787;" FontSize="14" Margin="0,0,6,0" />
+                            <TextBlock Text="Guia TV" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding ChannelCountText}" Style="{StaticResource SecondaryText}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SelectedGroup.Name, FallbackValue=''}" FontSize="18" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </DockPanel>
+
+                <!-- Cabeçalho: filmes/séries -->
+                <DockPanel Grid.Row="1" Margin="18,2,18,8" MinHeight="30"
+                           Visibility="{Binding IsLiveMode, Converter={StaticResource InverseBoolToVisibility}}">
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding Vod.CountText}" Style="{StaticResource SecondaryText}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Vod.HeaderText}" FontSize="18" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </DockPanel>
+
+                <!-- Lista de canais -->
+                <ListBox x:Name="ChannelList" AutomationProperties.Name="Canais" Grid.Row="2" Style="{StaticResource PlainList}"
+                         ItemContainerStyle="{StaticResource ChannelItem}" ItemTemplate="{StaticResource ChannelTemplate}"
+                         ItemsSource="{Binding Channels}" SelectedItem="{Binding SelectedChannel}"
+                         KeyDown="ChannelList_KeyDown"
+                         Visibility="{Binding IsLiveMode, Converter={StaticResource BoolToVisibility}}" />
+
+                <TextBlock Grid.Row="2" Text="{Binding EmptyListMessage}" Style="{StaticResource SecondaryText}" FontSize="16"
+                           TextAlignment="Center" TextWrapping="Wrap" Margin="24,40" HorizontalAlignment="Center"
+                           VerticalAlignment="Top">
+                    <TextBlock.Visibility>
+                        <MultiBinding Converter="{StaticResource AllTrueToVisibility}">
+                            <Binding Path="IsChannelListEmpty" />
+                            <Binding Path="IsLiveMode" />
+                        </MultiBinding>
+                    </TextBlock.Visibility>
+                </TextBlock>
+
+                <!-- Lista de filmes/séries -->
+                <ListBox x:Name="VodList" AutomationProperties.Name="Filmes e séries" Grid.Row="2" Style="{StaticResource PlainList}"
+                         ItemContainerStyle="{StaticResource VodItem}" ItemTemplate="{StaticResource VodTemplate}"
+                         ItemsSource="{Binding Vod.Items}" SelectedItem="{Binding Vod.SelectedItem}"
+                         KeyDown="VodList_KeyDown">
+                    <ListBox.Visibility>
+                        <MultiBinding Converter="{StaticResource AllTrueToVisibility}">
+                            <Binding Path="IsLiveMode" Converter="{StaticResource InverseBoolean}" />
+                            <Binding Path="Vod.IsSeriesOpen" Converter="{StaticResource InverseBoolean}" />
+                        </MultiBinding>
+                    </ListBox.Visibility>
+                </ListBox>
+
+                <!-- A carregar / vazio (filmes e séries) -->
+                <StackPanel Grid.Row="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="32,40"
+                            Visibility="{Binding Vod.IsLoading, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressBar Width="220" IsIndeterminate="{Binding Vod.IsLoadingIndeterminate}" Value="{Binding Vod.LoadingProgress}" Maximum="1" />
+                    <TextBlock Text="{Binding Vod.LoadingMessage}" Style="{StaticResource SecondaryText}" FontSize="15"
+                               HorizontalAlignment="Center" Margin="0,10,0,0" />
+                </StackPanel>
+                <TextBlock Grid.Row="2" Text="{Binding Vod.EmptyMessage}" Style="{StaticResource SecondaryText}" FontSize="16"
+                           HorizontalAlignment="Center" VerticalAlignment="Top" Margin="24,40">
+                    <TextBlock.Visibility>
+                        <MultiBinding Converter="{StaticResource AllTrueToVisibility}">
+                            <Binding Path="Vod.IsEmpty" />
+                            <Binding Path="IsLiveMode" Converter="{StaticResource InverseBoolean}" />
+                            <Binding Path="Vod.IsSeriesOpen" Converter="{StaticResource InverseBoolean}" />
+                        </MultiBinding>
+                    </TextBlock.Visibility>
+                </TextBlock>
+
+                <!-- Página da série: temporadas e episódios -->
+                <Grid Grid.Row="1" Grid.RowSpan="2" Background="{StaticResource BackgroundBrush}" DataContext="{Binding Vod.OpenSeries}"
+                      Visibility="{Binding DataContext.Vod.IsSeriesOpen, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="8,0,16,6">
+                        <Button DockPanel.Dock="Left" Style="{StaticResource IconButton}" Content="&#xE72B;" ToolTip="Voltar (Backspace)"
+                                AutomationProperties.Name="Voltar" Command="{Binding DataContext.Vod.CloseSeriesCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        <TextBlock Text="{Binding Name}" FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" Margin="4,0,0,0" />
+                    </DockPanel>
+
+                    <StackPanel Grid.Row="1" Margin="18,0,18,8">
+                        <TextBlock Text="{Binding MetaText}" Style="{StaticResource SecondaryText}" FontSize="14" />
+                        <TextBlock Text="{Binding Plot}" TextWrapping="Wrap" FontSize="14" MaxHeight="60" TextTrimming="WordEllipsis"
+                                   Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Visibility="{Binding Plot, Converter={StaticResource NullToVisibility}}" />
+                    </StackPanel>
+
+                    <ListBox Grid.Row="2" Margin="12,2,12,8" ItemsSource="{Binding Seasons}" SelectedItem="{Binding SelectedSeason}"
+                             ItemContainerStyle="{StaticResource SeasonChip}" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             AutomationProperties.Name="Temporadas">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+
+                    <ListBox x:Name="EpisodeList" Grid.Row="3" Style="{StaticResource PlainList}" AutomationProperties.Name="Episódios"
+                             ItemContainerStyle="{StaticResource EpisodeItem}" ItemTemplate="{StaticResource EpisodeTemplate}"
+                             ItemsSource="{Binding Episodes}" KeyDown="EpisodeList_KeyDown" />
+
+                    <StackPanel Grid.Row="3" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="24,40"
+                                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+                        <ProgressBar Width="200" IsIndeterminate="True" />
+                        <TextBlock Text="A carregar episódios…" Style="{StaticResource SecondaryText}" FontSize="15" Margin="0,10,0,0"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="3" Text="{Binding Error}" Style="{StaticResource SecondaryText}" FontSize="15" TextWrapping="Wrap"
+                               TextAlignment="Center" Margin="24,40" VerticalAlignment="Top"
+                               Visibility="{Binding Error, Converter={StaticResource NullToVisibility}}" />
+                </Grid>
+
+                <StackPanel Grid.Row="0" Grid.RowSpan="3" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="32"
+                            Visibility="{Binding HasPlaylists, Converter={StaticResource InverseBoolToVisibility}}">
+                    <TextBlock Style="{StaticResource Icon}" Text="&#xE7F4;" FontSize="48" Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBlock Text="Ainda não tens playlists" FontSize="22" FontWeight="SemiBold" Margin="0,16,0,6"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Adiciona uma lista M3U (URL ou ficheiro) ou uma conta Xtream Codes."
+                               Style="{StaticResource SecondaryText}" FontSize="15" TextWrapping="Wrap" TextAlignment="Center" />
+                    <Button Style="{StaticResource PrimaryButton}" Content="Adicionar playlist" Margin="0,20,0,0"
+                            HorizontalAlignment="Center" Command="{Binding AddPlaylistCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═════════════ Coluna direita: player ═════════════ -->
+        <controls:PlayerView x:Name="Player" Grid.Column="2" />
+
+        <!-- ═════════════ Barra de estado: progresso e notificações ═════════════ -->
+        <Border Grid.Row="1" Grid.ColumnSpan="3" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" MinHeight="40"
+                Visibility="{Binding IsFullscreen, Converter={StaticResource InverseBoolToVisibility}}">
+            <DockPanel Margin="8,4,16,4">
+                <Button DockPanel.Dock="Left" Style="{StaticResource IconButton}" Content="&#xE713;" Width="34" Height="32" FontSize="16"
+                        ToolTip="Definições (controlo parental, reprodução, cache)" AutomationProperties.Name="Definições"
+                        Command="{Binding OpenSettingsCommand}" />
+                <Button DockPanel.Dock="Left" Padding="10,3" FontSize="13" Margin="4,0,0,0" VerticalAlignment="Center"
+                        ToolTip="Gravações (ver, parar, apagar)" AutomationProperties.Name="Gravações" Command="{Binding OpenRecordingsCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7C8;" FontSize="12" Margin="0,0,6,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Icon}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveRecordings}" Value="0">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding RecordingsButtonText}" />
+                    </StackPanel>
+                </Button>
+                <Button DockPanel.Dock="Left" Padding="10,3" FontSize="13" Margin="4,0,12,0" VerticalAlignment="Center"
+                        ToolTip="Voltar a esconder os grupos bloqueados" Command="{Binding LockNowCommand}"
+                        Visibility="{Binding CanLockNow, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE72E;" FontSize="13" Margin="0,0,6,0" />
+                        <TextBlock Text="Bloquear" />
+                    </StackPanel>
+                </Button>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressBar Width="180" IsIndeterminate="{Binding IsBusyIndeterminate}" Value="{Binding BusyProgress}"
+                                 Maximum="1" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding BusyMessage}" Margin="12,0" FontSize="14" VerticalAlignment="Center" />
+                    <Button Content="Cancelar" Padding="12,4" FontSize="13" Command="{Binding CancelOperationCommand}" />
+                </StackPanel>
+
+                <Border DockPanel.Dock="Right" CornerRadius="6" Padding="12,4" Margin="12,0,0,0" VerticalAlignment="Center"
+                        HorizontalAlignment="Right" Background="{StaticResource Surface2Brush}"
+                        Visibility="{Binding Notification, Converter={StaticResource NullToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="NotificationIcon" Style="{StaticResource Icon}" Text="&#xE946;" Margin="0,0,8,0"
+                                   Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Text="{Binding Notification}" FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   MaxWidth="760" />
+                        <Button Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="10" Width="26" Height="26"
+                                Margin="8,0,0,0" Command="{Binding DismissNotificationCommand}" ToolTip="Fechar" />
+                    </StackPanel>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsNotificationError}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+
+                <TextBlock Text="Enter: ver canal · ↑/↓ PgUp/PgDn: mudar canal · F: ecrã inteiro · Espaço: pausa · M: sem som"
+                           Style="{StaticResource SecondaryText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

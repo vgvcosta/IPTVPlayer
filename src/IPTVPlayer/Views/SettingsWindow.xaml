@@ -1,0 +1,226 @@
+<Window x:Class="IPTVPlayer.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:IPTVPlayer.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+        Title="Definições" Width="640" Height="760" MinHeight="500"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource UiFont}" FontSize="15" UseLayoutRounding="True">
+
+    <Window.Resources>
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,22,0,10" />
+        </Style>
+        <Style x:Key="Chips" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                        <Setter Property="Margin" Value="0,4,6,0" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="Bd" CornerRadius="14" Padding="12,5" Background="{StaticResource SurfaceBrush}">
+                                        <ContentPresenter />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface2Brush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,8,24,8">
+            <StackPanel>
+                <!-- ═══ Controlo parental ═══ -->
+                <TextBlock Text="Controlo parental" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PinStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Visibility="{Binding HasPin, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Text="PIN atual" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <PasswordBox x:Name="CurrentPinBox" MaxLength="8" AutomationProperties.Name="PIN atual"
+                                             PasswordChanged="CurrentPin_Changed" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Novo PIN (4 a 8 algarismos)" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <PasswordBox x:Name="NewPinBox" MaxLength="8" AutomationProperties.Name="Novo PIN" PasswordChanged="NewPin_Changed" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Confirmar" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <PasswordBox x:Name="ConfirmPinBox" MaxLength="8" AutomationProperties.Name="Confirmar PIN" PasswordChanged="ConfirmPin_Changed" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource PrimaryButton}" Content="Guardar PIN" Command="{Binding SavePinCommand}" />
+                            <Button Content="Remover PIN" Margin="10,0,0,0" Command="{Binding RemovePinCommand}"
+                                    Visibility="{Binding HasPin, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PinMessage}" TextWrapping="Wrap" Margin="0,10,0,0"
+                                   Visibility="{Binding PinMessage, Converter={StaticResource NullToVisibility}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentHoverBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PinMessageIsError}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- Grupos bloqueados -->
+                <TextBlock Style="{StaticResource Section}">
+                    <Run Text="Grupos bloqueados" /><Run Text="{Binding PlaylistName, Mode=OneWay, StringFormat=' · {0}'}" FontWeight="Normal"
+                                                          Foreground="{StaticResource TextSecondaryBrush}" />
+                </TextBlock>
+                <TextBlock Text="Abre uma playlist para escolher os grupos a bloquear." Foreground="{StaticResource TextSecondaryBrush}"
+                           Visibility="{Binding HasPlaylist, Converter={StaticResource InverseBoolToVisibility}}" />
+                <Border Style="{StaticResource Card}" Visibility="{Binding HasPlaylist, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Sugerir grupos para adultos" Padding="12,6" FontSize="14"
+                                    Command="{Binding SuggestAdultCommand}" />
+                            <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="3" HorizontalAlignment="Left"
+                                    Visibility="{Binding IsXtream, Converter={StaticResource BoolToVisibility}}">
+                                <UniformGrid Columns="3" Width="300">
+                                    <RadioButton Style="{StaticResource SegmentRadio}" Content="Direto" GroupName="Scope" FontSize="14" IsChecked="{Binding IsLiveScope}" />
+                                    <RadioButton Style="{StaticResource SegmentRadio}" Content="Filmes" GroupName="Scope" FontSize="14" IsChecked="{Binding IsMoviesScope}" />
+                                    <RadioButton Style="{StaticResource SegmentRadio}" Content="Séries" GroupName="Scope" FontSize="14" IsChecked="{Binding IsSeriesScope}" />
+                                </UniformGrid>
+                            </Border>
+                        </DockPanel>
+                        <ListBox Style="{StaticResource PlainList}" ItemsSource="{Binding VisibleGroups}" Height="260" Margin="0,12,0,0"
+                                 AutomationProperties.Name="Grupos a bloquear">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListItem}">
+                                    <Setter Property="Padding" Value="8,6" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:LockableGroup}">
+                                    <CheckBox IsChecked="{Binding IsLocked}" Content="{Binding Name}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Text="Filmes e séries só aparecem aqui depois de abrires esses separadores pelo menos uma vez."
+                                   FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Visibility="{Binding IsXtream, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ═══ Reprodução ═══ -->
+                <TextBlock Text="Reprodução" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding BufferText}" FontWeight="SemiBold" Margin="12,0,0,0" />
+                            <TextBlock Text="Buffer de rede (mais = menos cortes, mas a mudança de canal demora mais)" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <Slider Minimum="0.5" Maximum="10" SmallChange="0.5" LargeChange="1" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                Value="{Binding BufferSeconds}" Margin="0,8,0,0" AutomationProperties.Name="Buffer de rede" />
+                        <CheckBox Content="Aceleração por hardware (desliga se vires imagem verde ou cortada)" Margin="0,16,0,0"
+                                  IsChecked="{Binding HardwareDecoding}" />
+                        <TextBlock Text="Idioma de áudio preferido" Margin="0,18,0,0" />
+                        <ListBox Style="{StaticResource Chips}" ItemsSource="{Binding AudioOptions}" SelectedValuePath="Code"
+                                 SelectedValue="{Binding PreferredAudio}" AutomationProperties.Name="Idioma de áudio" />
+                        <TextBlock Text="Legendas" Margin="0,14,0,0" />
+                        <ListBox Style="{StaticResource Chips}" ItemsSource="{Binding SubtitleOptions}" SelectedValuePath="Code"
+                                 SelectedValue="{Binding PreferredSubtitle}" AutomationProperties.Name="Legendas preferidas" />
+                        <TextBlock Text="As alterações aplicam-se ao próximo canal que abrires. Durante a reprodução: A muda o áudio, S as legendas."
+                                   FontSize="13" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ═══ Gravações ═══ -->
+                <TextBlock Text="Gravações" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Pasta onde ficam as gravações" />
+                        <DockPanel Margin="0,8,0,0">
+                            <Button DockPanel.Dock="Right" Content="Procurar…" Margin="8,0,0,0" Click="BrowseFolder_Click" />
+                            <TextBox Text="{Binding RecordingsFolder, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Pasta das gravações" />
+                        </DockPanel>
+                        <TextBlock Text="Cada gravação usa mais uma ligação ao fornecedor (muitos só permitem 1 ou 2)."
+                                   FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ═══ Comando ═══ -->
+                <TextBlock Text="Comando" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <CheckBox Content="Usar comando Xbox / XInput" IsChecked="{Binding GamepadEnabled}" />
+                        <TextBlock FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Cruzeta: navegar · A: OK · B: voltar · X: pausa · Y: ecrã inteiro · LB/RB: canal anterior/seguinte · LT/RT: recuar/avançar · View: Guia TV · Menu: pesquisar. As teclas multimédia do teclado também funcionam." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ═══ Cache ═══ -->
+                <TextBlock Text="Cache" Style="{StaticResource Section}" />
+                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Limpar" Command="{Binding ClearCacheCommand}" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Logótipos e capas guardados:" /> <Run Text="{Binding CacheSizeText, Mode=OneWay}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,14">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" MinWidth="110" IsCancel="True" />
+                <Button Style="{StaticResource PrimaryButton}" Content="Guardar" MinWidth="130" Margin="10,0,0,0"
+                        Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
