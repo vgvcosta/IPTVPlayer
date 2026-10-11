@@ -40,17 +40,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly VodRepository _vod;
     private readonly PlayerViewModel _playerViewModel;
     private readonly RecordingService _recordings;
-    private readonly IPTVPlayer.Views.GamepadService _gamepad;
     private Playlist? _playlist;
 
     public SettingsViewModel(ParentalControlService parental, SettingsRepository settings, PlayerService player,
         ImageDiskCache imageCache, ChannelRepository channels, VodRepository vod, PlayerViewModel playerViewModel,
-        RecordingService recordings, IPTVPlayer.Views.GamepadService gamepad, UpdateViewModel updates)
+        RecordingService recordings, UpdateViewModel updates)
     {
         Updates = updates;
         _playerViewModel = playerViewModel;
         _recordings = recordings;
-        _gamepad = gamepad;
         _parental = parental;
         _settings = settings;
         _player = player;
@@ -117,7 +115,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _hardwareDecoding = true;
 
-    // ── Idiomas, gravações e comando ──
+    // ── Idiomas e gravações ──
     public IReadOnlyList<LanguageOption> AudioOptions { get; } =
         [new("", "Automático"), .. TrackLanguages.Options.Select(o => new LanguageOption(o.Code, o.Label))];
 
@@ -133,9 +131,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _recordingsFolder = "";
 
-    [ObservableProperty]
-    private bool _gamepadEnabled = true;
-
     public UpdateViewModel Updates { get; }
 
     // ── Cache ──
@@ -150,7 +145,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         HardwareDecoding = _settings.Get(SettingsRepository.HardwareDecoding) != "0";
         PreferredAudio = _settings.Get(SettingsRepository.PreferredAudio) ?? "";
         PreferredSubtitle = _settings.Get(SettingsRepository.PreferredSubtitle) ?? "";
-        GamepadEnabled = _settings.Get(SettingsRepository.GamepadEnabled) != "0";
         RecordingsFolder = _recordings.Folder;
 
         if (playlist is not null)
@@ -245,9 +239,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _settings.Set(SettingsRepository.PreferredSubtitle, PreferredSubtitle is { Length: > 0 } s ? s : null);
         _playerViewModel.PreferredAudioLanguage = PreferredAudio;
         _playerViewModel.PreferredSubtitleLanguage = PreferredSubtitle;
-
-        _settings.Set(SettingsRepository.GamepadEnabled, GamepadEnabled ? "1" : "0");
-        _gamepad.Enabled = GamepadEnabled;
 
         if (!string.IsNullOrWhiteSpace(RecordingsFolder))
         {

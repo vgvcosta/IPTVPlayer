@@ -70,12 +70,12 @@ public partial class App : Application
         MainWindow = window;
         window.Show();
 
-        // Preferências de faixas e comando.
+        // Preferências de faixas; o comando fica sempre ativo (não há opção para o desligar).
         var prefs = _services.GetRequiredService<SettingsRepository>();
         var playerVm = _services.GetRequiredService<PlayerViewModel>();
         playerVm.PreferredAudioLanguage = prefs.Get(SettingsRepository.PreferredAudio);
         playerVm.PreferredSubtitleLanguage = prefs.Get(SettingsRepository.PreferredSubtitle);
-        _services.GetRequiredService<GamepadService>().Enabled = prefs.Get(SettingsRepository.GamepadEnabled) != "0";
+        _services.GetRequiredService<GamepadService>().Enabled = true;
 
         // Procura uma versão nova em segundo plano (sem avisos se falhar, ex.: sem internet).
         _ = _services.GetRequiredService<UpdateViewModel>().CheckSilentlyAsync();

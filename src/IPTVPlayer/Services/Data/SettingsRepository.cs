@@ -12,7 +12,6 @@ public sealed class SettingsRepository
     public const string HardwareDecoding = "hw_decoding";
     public const string PreferredAudio = "pref_audio_lang";
     public const string PreferredSubtitle = "pref_sub_lang";
-    public const string GamepadEnabled = "gamepad_enabled";
     public static string LastChannelKey(long playlistId) => $"last_channel.{playlistId}";
     public static string LastGroup(long playlistId) => $"last_group.{playlistId}";
 
