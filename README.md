@@ -19,8 +19,15 @@ controlo parental. Interface escura pensada para ver de longe, em português.
 
 ## Transferir
 
-Vai às [Releases](https://github.com/vgvcosta/IPTVPlayer/releases), descarrega `IPTVPlayer-x.y.z-win-x64.zip`,
-extrai e abre `IPTVPlayer.exe`. Não é preciso instalar nada (inclui o .NET e o VLC).
+Nas [Releases](https://github.com/vgvcosta/IPTVPlayer/releases) há duas opções (ambas já incluem o .NET e o VLC):
+
+- **Instalador** `IPTVPlayer-x.y.z-win-x64.msi`: instala em `Program Files`, cria atalhos no Menu Iniciar
+  e no ambiente de trabalho, e desinstala-se em *Definições → Aplicações*. Instalar uma versão nova
+  atualiza a anterior. As playlists e definições (`%AppData%\IPTVPlayer`) são sempre mantidas.
+- **Portátil** `IPTVPlayer-x.y.z-win-x64.zip`: extrai e abre `IPTVPlayer.exe`, sem instalar nada.
+
+O instalador não está assinado digitalmente, por isso o Windows pode mostrar "O Windows protegeu o
+computador". Carrega em **Mais informações → Executar mesmo assim**.
 
 > **Aviso:** esta aplicação é só um leitor e **não inclui nem fornece canais ou conteúdos**. Usa-a
 > apenas com listas e serviços a que tenhas acesso legítimo.
@@ -129,6 +136,7 @@ dotnet test
 ```powershell
 .\publish.ps1            # corre os testes e publica em .\publish\win-x64
 .\publish.ps1 -Zip       # também cria publish\IPTVPlayer-<versão>-win-x64.zip
+.\publish.ps1 -Msi       # também cria o instalador publish\IPTVPlayer-<versão>-win-x64.msi (WiX via NuGet)
 .\publish.ps1 -SkipTests
 ```
 

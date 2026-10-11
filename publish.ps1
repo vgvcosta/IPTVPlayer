@@ -9,6 +9,10 @@
 .EXAMPLE
     .\publish.ps1 -Zip -SkipTests
     Publica sem correr os testes e cria também um .zip pronto a distribuir.
+
+.EXAMPLE
+    .\publish.ps1 -Msi
+    Publica e cria o instalador .msi (WiX, descarregado automaticamente por NuGet).
 #>
 [CmdletBinding()]
 param(
@@ -16,6 +20,7 @@ param(
     [string]$Runtime = "win-x64",
     [string]$Output = "",
     [switch]$Zip,
+    [switch]$Msi,
     [switch]$SkipTests
 )
 
@@ -70,6 +75,17 @@ if ($Zip) {
     Write-Host "► A criar $zipPath…" -ForegroundColor Cyan
     Compress-Archive -Path (Join-Path $Output "*") -DestinationPath $zipPath -CompressionLevel Optimal
     Write-Host ("✔ Zip criado: {0} ({1:N0} MB)" -f $zipPath, ((Get-Item $zipPath).Length / 1MB)) -ForegroundColor Green
+}
+
+if ($Msi) {
+    $version = (Get-Item $exe).VersionInfo.ProductVersion -replace '\+.*$', ''
+    $installer = Join-Path $PSScriptRoot "installer\IPTVPlayer.Installer.wixproj"
+    $outDir = Split-Path $Output -Parent
+    Write-Host "► A criar o instalador MSI…" -ForegroundColor Cyan
+    dotnet build $installer -c $Configuration -p:Version=$version -p:PublishDir="$Output" -o $outDir --nologo
+    if ($LASTEXITCODE -ne 0) { throw "A criação do MSI falhou." }
+    $msiPath = Join-Path $outDir "IPTVPlayer-$version-$Runtime.msi"
+    Write-Host ("✔ Instalador criado: {0} ({1:N0} MB)" -f $msiPath, ((Get-Item $msiPath).Length / 1MB)) -ForegroundColor Green
 }
 
 Write-Host "Para executar: $exe"

@@ -1,7 +1,7 @@
 name: Release
 
 # Criar uma tag "vX.Y.Z" (ex.: git tag v4.0.0 && git push origin v4.0.0) publica uma release
-# com o .zip self-contained para Windows x64.
+# com o instalador .msi e o .zip self-contained para Windows x64.
 on:
   push:
     tags: ["v*"]
@@ -19,12 +19,14 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Publicar (testes + zip)
+      - name: Publicar (testes + zip + msi)
         shell: pwsh
-        run: ./publish.ps1 -Zip
+        run: ./publish.ps1 -Zip -Msi
 
       - name: Criar release
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/IPTVPlayer-*-win-x64.zip
+          files: |
+            publish/IPTVPlayer-*-win-x64.msi
+            publish/IPTVPlayer-*-win-x64.zip
           generate_release_notes: true

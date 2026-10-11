@@ -1,0 +1,24 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!--
+    Instalador MSI (WiX Toolset 5, vem por NuGet: não é preciso instalar nada).
+    Não está na solução porque precisa da pasta publicada; usa: .\publish.ps1 -Msi
+    Parâmetros: -p:PublishDir=<pasta publicada> -p:Version=<x.y.z>
+  -->
+  <PropertyGroup>
+    <Version Condition="'$(Version)' == ''">4.1.0</Version>
+    <PublishDir Condition="'$(PublishDir)' == ''">..\publish\win-x64</PublishDir>
+    <OutputName>IPTVPlayer-$(Version)-win-x64</OutputName>
+    <Platform>x64</Platform>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <Cultures>pt-PT</Cultures>
+    <DefineConstants>Version=$(Version);PublishDir=$(PublishDir)</DefineConstants>
+    <!-- Avisos ICE de componentes gerados automaticamente (Files) não são relevantes aqui -->
+    <SuppressIces>ICE61</SuppressIces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>
