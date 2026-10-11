@@ -41,11 +41,11 @@ public sealed class RecordingService : IDisposable
 
     public event EventHandler? Changed;
 
-    /// <summary>Vídeos\IPTV Player; em modo portátil (IPTVPLAYER_DATA) fica dentro dessa pasta.</summary>
+    /// <summary>Vídeos\PepinoTv; em modo portátil (IPTVPLAYER_DATA) fica dentro dessa pasta.</summary>
     public static string DefaultFolder =>
         Environment.GetEnvironmentVariable(AppPaths.DataDirectoryVariable) is { Length: > 0 } portable
             ? Path.Combine(portable, "recordings")
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "IPTV Player");
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "PepinoTv");
 
     public string Folder
     {

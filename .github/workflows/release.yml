@@ -27,6 +27,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            publish/IPTVPlayer-*-win-x64.msi
-            publish/IPTVPlayer-*-win-x64.zip
+            publish/PepinoTv-*-win-x64.msi
+            publish/PepinoTv-*-win-x64.zip
           generate_release_notes: true

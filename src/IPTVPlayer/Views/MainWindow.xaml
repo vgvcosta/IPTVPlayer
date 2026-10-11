@@ -8,7 +8,7 @@
         xmlns:controls="clr-namespace:IPTVPlayer.Views.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
-        Title="IPTV Player" Width="1440" Height="860" MinWidth="1000" MinHeight="600"
+        Title="PepinoTv" Width="1440" Height="860" MinWidth="1000" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}"
         Foreground="{StaticResource TextBrush}"

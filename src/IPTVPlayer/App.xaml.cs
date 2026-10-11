@@ -136,7 +136,7 @@ public partial class App : Application
 
     private void Fatal(string message)
     {
-        MessageBox.Show(message, "IPTV Player", MessageBoxButton.OK, MessageBoxImage.Error);
+        MessageBox.Show(message, "PepinoTv", MessageBoxButton.OK, MessageBoxImage.Error);
         Shutdown(1);
     }
 
@@ -148,9 +148,9 @@ public partial class App : Application
             ? ufe.Message
             : "Ocorreu um erro inesperado. A aplicação vai continuar a funcionar.\n\nDetalhes no ficheiro de log.";
         if (MainWindow is { IsLoaded: true } owner)
-            MessageBox.Show(owner, message, "IPTV Player", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(owner, message, "PepinoTv", MessageBoxButton.OK, MessageBoxImage.Warning);
         else
-            MessageBox.Show(message, "IPTV Player", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(message, "PepinoTv", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)

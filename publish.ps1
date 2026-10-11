@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Publica o IPTV Player como aplicação self-contained (não precisa do .NET instalado no PC de destino).
+    Publica o PepinoTv como aplicação self-contained (não precisa do .NET instalado no PC de destino).
 
 .EXAMPLE
     .\publish.ps1
@@ -70,7 +70,7 @@ Write-Host ("✔ Publicado em {0} ({1:N0} MB)" -f $Output, $sizeMb) -ForegroundC
 
 if ($Zip) {
     $version = (Get-Item $exe).VersionInfo.ProductVersion -replace '\+.*$', ''
-    $zipPath = Join-Path (Split-Path $Output -Parent) "IPTVPlayer-$version-$Runtime.zip"
+    $zipPath = Join-Path (Split-Path $Output -Parent) "PepinoTv-$version-$Runtime.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
     Write-Host "► A criar $zipPath…" -ForegroundColor Cyan
     Compress-Archive -Path (Join-Path $Output "*") -DestinationPath $zipPath -CompressionLevel Optimal
@@ -84,7 +84,7 @@ if ($Msi) {
     Write-Host "► A criar o instalador MSI…" -ForegroundColor Cyan
     dotnet build $installer -c $Configuration -p:Version=$version -p:PublishDir="$Output" -o $outDir --nologo
     if ($LASTEXITCODE -ne 0) { throw "A criação do MSI falhou." }
-    $msiPath = Join-Path $outDir "IPTVPlayer-$version-$Runtime.msi"
+    $msiPath = Join-Path $outDir "PepinoTv-$version-$Runtime.msi"
     Write-Host ("✔ Instalador criado: {0} ({1:N0} MB)" -f $msiPath, ((Get-Item $msiPath).Length / 1MB)) -ForegroundColor Green
 }
 

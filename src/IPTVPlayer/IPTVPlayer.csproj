@@ -8,8 +8,8 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>IPTVPlayer</RootNamespace>
     <AssemblyName>IPTVPlayer</AssemblyName>
-    <Product>IPTV Player</Product>
-    <Version>4.1.0</Version>
+    <Product>PepinoTv</Product>
+    <Version>4.2.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Company>Vitor Costa</Company>
     <Copyright>© 2026 Vitor Costa · MIT</Copyright>
