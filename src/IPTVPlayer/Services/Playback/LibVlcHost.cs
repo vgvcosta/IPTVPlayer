@@ -7,7 +7,9 @@ public sealed class LibVlcHost : IDisposable
 {
     public LibVlcHost()
     {
-        LibVLC = new LibVLC(enableDebugLogs: false, "--no-video-title-show", "--no-snapshot-preview");
+        // clock-jitter/clock-synchro: em diretos com tempos irregulares, o VLC deitava fora todo o áudio por "atraso".
+        LibVLC = new LibVLC(enableDebugLogs: false, "--no-video-title-show", "--no-snapshot-preview",
+            "--clock-jitter=0", "--clock-synchro=0");
     }
 
     public LibVLC LibVLC { get; }

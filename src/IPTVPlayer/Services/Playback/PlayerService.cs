@@ -317,6 +317,9 @@ public sealed class PlayerService : IDisposable
 
     private void OnBuffering(object? sender, MediaPlayerBufferingEventArgs e)
     {
+        // Ainda chegam dados: não é uma paragem, mesmo que o tempo não avance (ex.: buffer grande a encher).
+        lock (_sync) _lastTimeChangeUtc = DateTime.UtcNow;
+
         // Em HLS o VLC continua a emitir Buffering (< 100%) a cada segmento durante a reprodução
         // normal: só mostramos a percentagem enquanto ainda não começou a tocar.
         if (_reachedPlaying || _state is not (PlaybackState.Opening or PlaybackState.Buffering)) return;
@@ -402,7 +405,7 @@ public sealed class PlayerService : IDisposable
                     _lastTimeMs = time;
                     _lastTimeChangeUtc = DateTime.UtcNow;
                 }
-                else if (_request is { IsLive: true } && DateTime.UtcNow - _lastTimeChangeUtc > StallTimeout)
+                else if (_request is { IsLive: true } && DateTime.UtcNow - _lastTimeChangeUtc > CurrentStallTimeout)
                 {
                     _lastTimeChangeUtc = DateTime.UtcNow;
                     stalled = true;
@@ -415,6 +418,10 @@ public sealed class PlayerService : IDisposable
             Log.Warn("Erro no monitor de reprodução.", ex);
         }
     }
+
+    /// <summary>Um buffer maior demora mais a encher: dar-lhe sempre pelo menos o dobro desse tempo.</summary>
+    private TimeSpan CurrentStallTimeout =>
+        TimeSpan.FromMilliseconds(Math.Max(StallTimeout.TotalMilliseconds, NetworkCachingMs * 2.0));
 
     private void StartWatchdog(int generation)
     {
